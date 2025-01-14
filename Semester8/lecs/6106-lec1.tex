@@ -1,0 +1,115 @@
+\chapter{Statistics of Binary Classification}
+
+Let $\mathcal{X}$ be an input space. Consider the following statistical model for labelling elements of $\mathcal X$: an underlying unknown distribution $\mathcal{D}$ over $\mathcal{X} \times \{0, 1\}$. We are given a \spl{training set} $S = \{(x_1, y_1), \ldots, (x_n, y_n)\}$ drawn iid from $\mathcal D$ and wish to ``learn'' a \spl{classifier} $g : \mathcal{X} \to \{0, 1\}$ that approximates the distribution $\mathcal{D}$ as best as possible. Consider the following loss of a classifier $g$ on a sample $(x,y)$:
+\[
+    L(g, (x, y)) = \begin{cases}
+        1 & \text{if } g(x) \neq y, \\
+        0 & \text{otherwise}.
+    \end{cases}
+\]
+
+The average loss, then, is given by
+\[
+    L(g) := \ee{(x,y)\sim\mathcal D}{L(g, (x,y))} = \pp{(x,y)\sim\mathcal D}{g(x) \neq y}.
+\]
+
+We only have a finite sample to measure losses of potential classifiers: we define the \spl{empirical} loss of a classifier on the sample by
+\[
+    L_n(g) := \frac{1}{n} \sum_{i=1}^n L(g, (x_i, y_i)). 
+\]
+Notice that it is a random variable since it depends on the random sample $S$.
+
+Suppose that an algorithm given sample $S$ returns a classifier $\widehat{g}_n$. We are interested in two questions about the classifier.
+
+\begin{enumerate}
+    \item Is $L(\widehat{g}_n)$ close to $\displaystyle{\inf_{g\in\mathcal C}L(g)}$? This is the \spl{accuracy} question.
+    \item Is $L(\widehat{g}_n)$ close to $L_n(\widehat{g}_n)$? This is the \spl{generalization} question.
+\end{enumerate}
+
+Consider the natural algorithm for binary classification in Figure \ref{alg:min-emp-loss} that simply chooses the classifier minimizing \emph{empirical loss} (what more do we have to go on?).
+
+% algorithm for minimum empirical loss
+\begin{figure}[!h]
+    \label{alg:min-emp-loss}
+    \begin{algorithm}[H]
+        \begin{algorithmic}[1]
+            \State \textbf{Input:} Sample $S = \{(x_1, y_1), \ldots, (x_n, y_n)\}$.
+            \State \textbf{Output:} Classifier $\widehat{g}_n$.
+            \State $\widehat{g}_n = \arg\min_{g\in\mathcal C} L_n(g)$.
+            \State \textbf{return} $\widehat{g}_n$.
+        \end{algorithmic}
+    \end{algorithm}    
+    \caption{Just minimize Empirical Loss!}
+\end{figure}
+
+Let's estimate its accuracy. Assume that $\displaystyle{g^* = \arg\min_{g\in\mathcal C}L(g)}$ is the best classifier in the class $\mathcal C$ (called the \spl{Naïve Bayes classifier}). We have
+
+\begin{align*}
+    L(\widehat{g}_n) - L(g^*) &= L(\widehat{g}_n) - L_n(\widehat{g}_n) + L_n(\widehat{g}_n) - L(g^*)\\
+    &\leq L(\widehat{g}_n) - L_n(\widehat{g}_n) + L_n(g^*) - L(g^*)\\
+    &\leq 2\sup_{g\in \mathcal C}|L_n(g) - L(g)|.
+\end{align*}
+
+The goal now is to boudn the quantity $\sup_{g\in \mathcal C}|L_n(g) - L(g)|$, as $n$ grows large. If it can be shown to go to $0$, we have asymptotically perfect accuracy. Notice that for any particular $g$, the value $L_n(g)$ is a random variable with expectation (over $S$) being $L(g)$, i.e. $\ee{S}{L_n(g)} = L(g)$. As $n$ grows large, one expects that $L_n(g)$ is close to $L(g)$. However, do we have a uniform upper bound for all classifiers in $\mathcal C$? If $\mathcal C$ is finite, this is easy to see; however, in the infinite case, it is not clear. We essentially need a \emph{uniform} LLN.
+
+\textbf{Remark}. For those familiar with some analysis, the situation here is similar to uniform convergence of a sequence of functions; we are looking to check if the sequence of functions $\{L_n\}$ converges uniformly to $L$.
+
+\section{Uniform Law of Large Numbers}
+
+Suppose that $S = \{X_1, \cdots, X_n\}$ is a list of iid random objects (distributed according to $\mathcal D$, say) taking values in $\mathcal X$. Let $\mathcal F$ be a class of real-valued functions $\mathcal X\to\mathbb R$. What can we say about the random variable $Z$ over $\mathcal D^S$ defined by
+\[
+    Z = \sup_{f\in\mathcal F} \left| \frac{1}{n} \sum_{i=1}^n f(X_i) - \ee{\mathcal D}{f(X)} \right|?
+\]
+
+[Of course, this only makes sense when $\ee{X}{f(X)}$ is well-defined for all $f\in\mathcal F$.]
+
+In particular, we are interested in the following three questions.
+
+\begin{enumerate}
+    \item Whether $Z \to 0$ when $n\to\infty$ (asymptotic question).
+    \item Can we obtain non-asymptotic guarantees, at large $n$?
+    \item Can we provide conditions such that $Z$ converges to $0$?
+\end{enumerate}
+
+We have already seen that the ULLN can analyse binary classification. Another application is in $M$-estimation.
+
+\subsection{$M$-estimation (intro)}
+
+Many problems in statistics are concerned with estimators of the form 
+
+\[
+    \widehat{\theta}_n = \arg\max_{\theta\in\Theta} \frac{1}{n}\sum_{i=1}^n m_{\theta}(x_i),
+\]
+where $X_1, \cdots, X_n$ are iid observations. Here, $\Theta$ is the parameter space, and $m_{\theta} : \mathcal X \to \mathbb R$ is a real-valued function parameterized by $\theta$.
+
+\begin{example}
+    [familiar $M$-estimators]
+
+    \noindent
+    \begin{enumerate}
+        \item $m_\theta(x) = \log p_\theta(x)$ where $p$ is a family of distributions parameterized by $\theta$. This is the \spl{maximum likelihood estimator}, i.e. $\widehat{\theta}_n$ is the MLE estimate.
+        \item $m_\theta(x) = -(x - \theta)^2$. This estimator is the \spl{sample mean}, i.e. $\widehat{\theta}_n = \frac{1}{n}\sum_{i=1}^n x_i$.
+        \item $m_\theta(x) = -|x - \theta|$. This estimator is the \spl{sample median}.
+    \end{enumerate}
+\end{example}
+
+In $M$-estimation, the target quantity for $\widehat{\theta}_n$ (what we want $\widehat{\theta}_n$ to approach) is 
+\[
+\theta^* = \arg\max_{\theta\in\Theta} \e{m_{\theta}(X)}.
+\]
+
+Similar to binary classification accuracy, we want $d(\widehat{\theta}_n, \theta^*) = |\widehat{\theta}_n - \theta^*|$ to be small. It turns out (we will see this later) that
+\[
+    d(\widehat{\theta}_n, \theta^*) \leq 2\sup_{\theta\in\Theta} \left| \frac{1}{n}\sum_{i=1}^n m_{\theta}(X_i) - \e{m_{\theta}(X)} \right|,
+\]
+which is another instance of the use of the uniform LLN.
+
+\subsection{Statement and Proof}
+
+Back to the uniform LLN. To show some results, we first need the following observation.
+
+\b{Key observation}. $Z$ concentrates around \[\displaystyle{\ee{S}{Z} = \ee{S}{\sup_{f\in\mathcal F} \left| \frac{1}{n} \sum_{i=1}^n f(X_i) - \ee{\mathcal D}{f(X)} \right|}}.\]
+
+We can then control $\e{Z}$ through techniques like \spl{symmetrization} (leading to Rademacher complexity) and \spl{chaining} (leading to VC dimension).
+
+\textbf{Remark}. A family of functions $\mathcal F$ is called \spl{Glivenko-Cantelli} if $Z \to 0$ a.s. as $n \to \infty$ (more on this later).
